@@ -21,14 +21,14 @@ export const getFretboardNotes = (
     // Loop through frets 0 to 15
     for (let fret = 0; fret <= 15; fret++) {
       const currentNoteIndex = (openStringNoteIndex + fret) % 12;
-      
+
       // Check if this note is in our target intervals
       if (targetIndices.includes(currentNoteIndex)) {
         // Find which interval this corresponds to (for coloring logic)
         // We need to match the currentNoteIndex back to the interval
         // interval = (currentNoteIndex - rootIndex + 12) % 12
         const interval = (currentNoteIndex - rootIndex + 12) % 12;
-        
+
         notes.push({
           string: stringIdx + 1, // 1-based index for UI
           fret,
@@ -41,4 +41,22 @@ export const getFretboardNotes = (
   });
 
   return notes;
+};
+
+export const getIntervalName = (interval: number): string => {
+  const names: Record<number, string> = {
+    0: 'R',
+    1: 'b2',
+    2: '2',
+    3: 'b3',
+    4: '3',
+    5: '4',
+    6: 'b5',
+    7: '5',
+    8: 'b6',
+    9: '6',
+    10: 'b7',
+    11: '7'
+  };
+  return names[interval] || '?';
 };

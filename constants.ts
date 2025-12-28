@@ -3,6 +3,21 @@ import { ScaleDefinition, ChordDefinition } from './types';
 // Chromatic Scale (Sharps preferred for simplicity in MVP)
 export const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
+export const NOTE_COLORS: Record<string, string> = {
+  'C': 'bg-red-600',
+  'C#': 'bg-pink-500',
+  'D': 'bg-orange-500',
+  'D#': 'bg-amber-700',
+  'E': 'bg-yellow-400 text-black', // Yellow often needs dark text for contrast
+  'F': 'bg-green-700',
+  'F#': 'bg-green-400 text-black',
+  'G': 'bg-blue-700',
+  'G#': 'bg-sky-400 text-black',
+  'A': 'bg-black',
+  'A#': 'bg-neutral-500',
+  'B': 'bg-fuchsia-600'
+};
+
 // Standard Tuning (High E to Low E): E B G D A E
 // Stored as indices in the NOTES array
 export const TUNING_INDICES = [4, 11, 7, 2, 9, 4]; // E, B, G, D, A, E
