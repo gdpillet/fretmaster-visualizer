@@ -359,8 +359,18 @@ const App: React.FC = () => {
         </div>
 
         {/* Footer Credit */}
-        <div className="absolute bottom-2 right-4 text-[10px] text-muted-foreground pointer-events-none">
-          MVP Visualizer v1.1
+        <div className="absolute bottom-2 right-4 text-[10px] text-muted-foreground flex items-center gap-1">
+          <span>Designed and Developed by</span>
+          <a
+            href="https://gdpillet.github.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-primary hover:text-primary/80 transition-colors underline decoration-dotted underline-offset-2"
+          >
+            Gaston Pillet
+          </a>
+          <span>—</span>
+          <span>MVP Visualizer v1.1</span>
         </div>
       </main>
 
