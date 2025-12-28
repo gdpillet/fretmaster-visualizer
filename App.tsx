@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Controls } from './components/Controls';
 import { Fretboard } from './components/Fretboard';
 import { ChordLayout } from './components/ChordLayout';
@@ -374,6 +375,7 @@ const App: React.FC = () => {
         </div>
       </main>
 
+      <Analytics />
     </div>
   );
 };
