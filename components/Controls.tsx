@@ -1,5 +1,4 @@
 import React from 'react';
-import { Select } from './ui/Select';
 import { NOTES, SCALES, CHORDS } from '../constants';
 import { ViewMode } from '../types';
 import { Music, Zap, Layout, Smartphone, Moon, Sun, Layers, Binary } from 'lucide-react';
@@ -15,6 +14,8 @@ interface ControlsProps {
   setOrientation: (o: 'horizontal' | 'vertical') => void;
   theme: 'dark' | 'light';
   toggleTheme: () => void;
+  showFingering: boolean;
+  setShowFingering: (s: boolean) => void;
 }
 
 // Interval definitions for the visualization grid
@@ -43,7 +44,9 @@ export const Controls: React.FC<ControlsProps> = ({
   orientation,
   setOrientation,
   theme,
-  toggleTheme
+  toggleTheme,
+  showFingering,
+  setShowFingering
 }) => {
 
   // Helper to find index of specific scales for the Quick Actions buttons
@@ -89,8 +92,8 @@ export const Controls: React.FC<ControlsProps> = ({
         <button
           onClick={() => { setMode('scale'); setTypeIndex(0); }}
           className={`flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${mode === 'scale'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
             }`}
         >
           <Zap size={16} /> Scale
@@ -98,8 +101,8 @@ export const Controls: React.FC<ControlsProps> = ({
         <button
           onClick={() => { setMode('chord'); setTypeIndex(0); }}
           className={`flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${mode === 'chord'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
             }`}
         >
           <Music size={16} /> Chord
@@ -134,51 +137,50 @@ export const Controls: React.FC<ControlsProps> = ({
 
       {/* Type Selector & Minor Variations */}
       <div className="space-y-4">
-        <Select
-          label={mode === 'scale' ? "Pattern Type" : "Chord Quality"}
-          value={typeIndex}
-          onChange={(e) => setTypeIndex(Number(e.target.value))}
-          className="bg-background text-foreground"
-        >
-          {(mode === 'scale' ? SCALES : CHORDS).map((item, idx) => (
-            <option key={item.name} value={idx}>{item.name}</option>
-          ))}
-        </Select>
-
-        {/* Minor Variations Quick-Select */}
-        {mode === 'scale' && (
-          <div className={`transition-all duration-300 ${isMinorFamily ? 'opacity-100' : 'opacity-50 grayscale pointer-events-none'}`}>
-            <div className="flex items-center gap-2 mb-2">
-              <Layers size={12} className="text-muted-foreground" />
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Minor Variations
-              </label>
-            </div>
-            <div className="flex gap-1">
-              {[
-                { label: 'Natural', idx: naturalMinorIdx },
-                { label: 'Harmonic', idx: harmonicMinorIdx },
-                { label: 'Melodic', idx: melodicMinorIdx }
-              ].map((variant) => (
-                <button
-                  key={variant.label}
-                  onClick={() => setTypeIndex(variant.idx)}
-                  className={`
-                      flex-1 py-1.5 text-[10px] uppercase font-bold tracking-wide rounded border transition-all
-                      ${typeIndex === variant.idx
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'}
-                    `}
-                >
-                  {variant.label}
-                </button>
-              ))}
-            </div>
+        {/* Fingering Toggle (Chord Mode Only) */}
+        {mode === 'chord' && (
+          <div className="pb-2 mb-2 border-b border-border">
+            <button
+              onClick={() => setShowFingering(!showFingering)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md border text-xs font-bold uppercase tracking-wider transition-all ${showFingering
+                ? 'bg-primary/20 border-primary text-primary'
+                : 'bg-card border-border text-muted-foreground hover:bg-muted'
+                }`}
+            >
+              <span>Show Fingering (1-4)</span>
+              <span className={`block w-2 h-2 rounded-full ${showFingering ? 'bg-primary' : 'bg-muted-foreground'}`} />
+            </button>
           </div>
         )}
+
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {mode === 'scale' ? "Pattern Type" : "Chord Quality"}
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {(mode === 'scale' ? SCALES : CHORDS).map((item, idx) => (
+              <button
+                key={item.name}
+                onClick={() => setTypeIndex(idx)}
+                className={`
+                  flex flex-col justify-center py-2 px-3 rounded-md border text-left transition-all leading-tight
+                  ${typeIndex === idx
+                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                    : 'bg-card text-foreground border-border hover:border-primary/30'}
+                `}
+              >
+                <span className="text-xs font-bold truncate w-full">{item.name}</span>
+                {/* Render description if available (for chords) */}
+                {(item as any).description && (
+                  <span className={`text-[10px] mt-0.5 truncate w-full ${typeIndex === idx ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                    {(item as any).description}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-
-
 
       {/* Orientation Toggle */}
       <div className="pt-4 border-t border-border mt-auto">
@@ -186,8 +188,8 @@ export const Controls: React.FC<ControlsProps> = ({
           <button
             onClick={() => setOrientation('vertical')}
             className={`flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border transition-all ${orientation === 'vertical'
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border hover:bg-muted text-muted-foreground'
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border hover:bg-muted text-muted-foreground'
               }`}
           >
             <Smartphone size={16} />
@@ -196,8 +198,8 @@ export const Controls: React.FC<ControlsProps> = ({
           <button
             onClick={() => setOrientation('horizontal')}
             className={`flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border transition-all ${orientation === 'horizontal'
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border hover:bg-muted text-muted-foreground'
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border hover:bg-muted text-muted-foreground'
               }`}
           >
             <Layout size={16} />

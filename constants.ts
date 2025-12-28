@@ -38,14 +38,36 @@ export const SCALES: ScaleDefinition[] = [
 ];
 
 export const CHORDS: ChordDefinition[] = [
-  { name: 'Major', intervals: [0, 4, 7] },
-  { name: 'Minor', intervals: [0, 3, 7] },
-  { name: '5 (Power Chord)', intervals: [0, 7] },
-  { name: 'Major 7', intervals: [0, 4, 7, 11] },
-  { name: 'Minor 7', intervals: [0, 3, 7, 10] },
-  { name: 'Dominant 7', intervals: [0, 4, 7, 10] },
-  { name: 'Sus2', intervals: [0, 2, 7] },
-  { name: 'Sus4', intervals: [0, 5, 7] },
-  { name: 'Diminished', intervals: [0, 3, 6] },
-  { name: 'Augmented', intervals: [0, 4, 8] },
+  // --- Essentials (The Big 5) ---
+  { name: 'Major', intervals: [0, 4, 7], description: 'Happy, stable, fundamental' },
+  { name: 'Minor', intervals: [0, 3, 7], description: 'Sad, serious, emotional' },
+  { name: 'Dominant 7', intervals: [0, 4, 7, 10], description: 'Bluesy, tension, wants to resolve' },
+  { name: 'Major 7', intervals: [0, 4, 7, 11], description: 'Dreamy, smooth, jazz staple' },
+  { name: 'Minor 7', intervals: [0, 3, 7, 10], description: 'Mellow, soulful, r&b' },
+
+  // --- Rock & Pop Staples ---
+  { name: '5 (Power Chord)', intervals: [0, 7], description: 'Rock, distortion, punchy' },
+  { name: 'Sus4', intervals: [0, 5, 7], description: 'Tension, usually resolves to Major' },
+  { name: 'Sus2', intervals: [0, 2, 7], description: 'Bright, open, airy' },
+  { name: 'Add 9', intervals: [0, 4, 7, 2], description: 'Beautiful, pop ballad sound' },
+
+  // --- Intermediate Colors ---
+  { name: 'Major 6', intervals: [0, 4, 7, 9], description: 'Sweet, country/swing vibe' },
+  { name: 'Minor 6', intervals: [0, 3, 7, 9], description: 'Dark, mysterious, spy movie' },
+  { name: 'Diminished', intervals: [0, 3, 6], description: 'Tense, dramatic, unstable' },
+  { name: 'Augmented', intervals: [0, 4, 8], description: 'Unsettled, floating, spacey' },
+
+  // --- Jazz & Advanced ---
+  { name: 'Minor Major 7', intervals: [0, 3, 7, 11], description: 'Noir, intense, Hitchcock-style' },
+  { name: 'Half-Diminished (m7b5)', intervals: [0, 3, 6, 10], description: 'Tragic, jazz minor 2-5-1' },
+  { name: 'Diminished 7', intervals: [0, 3, 6, 9], description: 'Symmetrical, passing chord' },
+  { name: 'Major 9', intervals: [0, 4, 7, 11, 2], description: 'Lush, sophisticated' },
+  { name: 'Minor 9', intervals: [0, 3, 7, 10, 2], description: 'Deep, rich, funk/soul' },
+  { name: 'Dominant 9', intervals: [0, 4, 7, 10, 2], description: 'Funky, "James Brown" chord' },
+
+  // --- Altered (Hendrix/Neo-Soul) ---
+  { name: '7#9 (Hendrix)', intervals: [0, 4, 7, 10, 3], description: 'Purple Haze, rock edge' },
+  { name: '7b9', intervals: [0, 4, 7, 10, 1], description: 'Dark tension, classical resolve' },
+  { name: '11th / 13th', intervals: [0, 4, 7, 10, 2, 5], description: 'Complex, modern neo-soul' }, // Merged for simplicity or keep separate? Let's keep separate but fewer.
+  { name: 'Major 13', intervals: [0, 4, 7, 11, 2, 9], description: 'Very lush, ending chord' },
 ];

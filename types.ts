@@ -8,6 +8,7 @@ export interface ScaleDefinition {
 export interface ChordDefinition {
   name: string;
   intervals: number[];
+  description?: string;
 }
 
 export type ViewMode = 'scale' | 'chord';
