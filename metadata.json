@@ -1,0 +1,5 @@
+{
+  "name": "FretMaster Visualizer",
+  "description": "A mobile-first, modern guitar fretboard visualizer for scales and chords using standard tuning.",
+  "requestFramePermissions": []
+}
