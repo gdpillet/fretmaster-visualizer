@@ -140,16 +140,46 @@ export const Controls: React.FC<ControlsProps> = ({
         {/* Fingering Toggle (Chord Mode Only) */}
         {mode === 'chord' && (
           <div className="pb-2 mb-2 border-b border-border">
-            <button
-              onClick={() => setShowFingering(!showFingering)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md border text-xs font-bold uppercase tracking-wider transition-all ${showFingering
-                ? 'bg-primary/20 border-primary text-primary'
-                : 'bg-card border-border text-muted-foreground hover:bg-muted'
-                }`}
-            >
-              <span>Show Fingering (1-4)</span>
-              <span className={`block w-2 h-2 rounded-full ${showFingering ? 'bg-primary' : 'bg-muted-foreground'}`} />
-            </button>
+            <div className="relative group">
+              <button
+                onClick={() => setShowFingering(!showFingering)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md border text-xs font-bold uppercase tracking-wider transition-all ${showFingering
+                  ? 'bg-primary/20 border-primary text-primary'
+                  : 'bg-card border-border text-muted-foreground hover:bg-muted'
+                  }`}
+              >
+                <span>Show Finger Positions (1-4)</span>
+                <span className={`block w-2 h-2 rounded-full ${showFingering ? 'bg-primary' : 'bg-muted-foreground'}`} />
+              </button>
+
+              {/* Delightful Tooltip */}
+              <div className="absolute left-0 top-full mt-2 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 pointer-events-none">
+                <div className="bg-gradient-to-br from-card/95 to-card/90 backdrop-blur-xl border border-primary/30 rounded-xl p-4 shadow-2xl">
+                  <div className="text-xs font-bold text-primary uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                    Finger Guide
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="w-6 h-6 rounded-full bg-transparent border-2 border-primary text-primary font-bold flex items-center justify-center text-xs">1</span>
+                      <span className="text-foreground font-medium">Index</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="w-6 h-6 rounded-full bg-transparent border-2 border-primary text-primary font-bold flex items-center justify-center text-xs">2</span>
+                      <span className="text-foreground font-medium">Middle</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="w-6 h-6 rounded-full bg-transparent border-2 border-primary text-primary font-bold flex items-center justify-center text-xs">3</span>
+                      <span className="text-foreground font-medium">Ring</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="w-6 h-6 rounded-full bg-transparent border-2 border-primary text-primary font-bold flex items-center justify-center text-xs">4</span>
+                      <span className="text-foreground font-medium">Pinky</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

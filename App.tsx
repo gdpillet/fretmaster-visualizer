@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Controls } from './components/Controls';
 import { Fretboard } from './components/Fretboard';
 import { ChordLayout } from './components/ChordLayout';
-import { Binary, Music } from 'lucide-react';
+import { Binary, Music, X } from 'lucide-react';
 import { NOTES, SCALES, CHORDS, NOTE_COLORS } from './constants';
 import { getFretboardNotes, getIntervalName, getHarmonizedChords, HarmonyLevel } from './utils/theory';
 import { generateChordVoicings } from './utils/chord-generator';
@@ -18,6 +18,19 @@ const App: React.FC = () => {
   const [showFingering, setShowFingering] = useState<boolean>(true);
   const [harmonyLevel, setHarmonyLevel] = useState<HarmonyLevel>('triad');
   const [selectedVoicingId, setSelectedVoicingId] = useState<string | null>(null);
+
+  // Custom chord voicing order (persisted in localStorage per chord)
+  const [customVoicingOrder, setCustomVoicingOrder] = useState<Record<string, string[]>>(() => {
+    try {
+      const stored = localStorage.getItem('customChordOrder');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Drag state for visual feedback
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // Reset selected voicing when root/type changes
   useEffect(() => {
@@ -122,6 +135,68 @@ const App: React.FC = () => {
       // e.g. if we have 'Diminished' and CHORDS has 'Diminished' it works.
       setTypeIndex(0);
     }
+  };
+
+  // Apply custom voicing order
+  const orderedVoicings = useMemo(() => {
+    if (mode !== 'chord') return [];
+    const orderKey = `${root}-${CHORDS[typeIndex].name}`;
+    const customOrder = customVoicingOrder[orderKey];
+
+    if (!customOrder || customOrder.length === 0) return chordVoicings;
+
+    // Sort by custom order, putting unordered items at the end
+    return [...chordVoicings].sort((a, b) => {
+      const aIndex = customOrder.indexOf(a.id);
+      const bIndex = customOrder.indexOf(b.id);
+      if (aIndex === -1 && bIndex === -1) return 0;
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
+  }, [chordVoicings, customVoicingOrder, root, typeIndex, mode]);
+
+  // Drag-and-drop handlers
+  const handleDragStart = (e: React.DragEvent, voicingId: string, index: number) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('voicingId', voicingId);
+    e.dataTransfer.setData('sourceIndex', index.toString());
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    const sourceIndex = parseInt(e.dataTransfer.getData('sourceIndex'));
+
+    if (sourceIndex === targetIndex) {
+      setDraggedIndex(null);
+      return;
+    }
+
+    // Reorder array
+    const newOrder = [...orderedVoicings];
+    const [removed] = newOrder.splice(sourceIndex, 1);
+    newOrder.splice(targetIndex, 0, removed);
+
+    // Save to localStorage
+    const orderKey = `${root}-${CHORDS[typeIndex].name}`;
+    const newCustomOrder = {
+      ...customVoicingOrder,
+      [orderKey]: newOrder.map(v => v.id)
+    };
+    setCustomVoicingOrder(newCustomOrder);
+    localStorage.setItem('customChordOrder', JSON.stringify(newCustomOrder));
+
+    setDraggedIndex(null);
   };
 
   return (
@@ -264,13 +339,13 @@ const App: React.FC = () => {
             </div>
           ) : (
             <div className="flex h-full w-full gap-6 p-6">
-              {chordVoicings.length > 0 ? (
+              {orderedVoicings.length > 0 ? (
                 <>
                   {/* LEFT COLUMN - FIXED FEATURED CHORD */}
                   <div className="w-[45%] flex-shrink-0 flex flex-col items-center justify-center">
                     {(() => {
-                      const selectedId = selectedVoicingId || chordVoicings[0].id;
-                      const mainVoicing = chordVoicings.find(v => v.id === selectedId) || chordVoicings[0];
+                      const selectedId = selectedVoicingId || orderedVoicings[0].id;
+                      const mainVoicing = orderedVoicings.find(v => v.id === selectedId) || orderedVoicings[0];
 
                       // Extract notes for Info Panel
                       const notesInfo = mainVoicing.strings.filter(s => s.fret !== -1).sort((a, b) => a.interval - b.interval);
@@ -323,26 +398,41 @@ const App: React.FC = () => {
                   {/* RIGHT COLUMN - SCROLLABLE VARIATIONS GRID */}
                   <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     <div className="grid grid-cols-3 gap-6 p-2 pb-6">
-                      {chordVoicings.map(v => (
-                        <button
-                          key={v.id}
-                          onClick={() => setSelectedVoicingId(v.id)}
-                          className={`
-                            relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-300
-                            ${(selectedVoicingId || chordVoicings[0].id) === v.id
-                              ? 'bg-primary/10 border-primary ring-2 ring-primary/50 shadow-2xl scale-[1.02]'
-                              : 'bg-card/50 border-border hover:bg-card hover:border-primary/50 opacity-70 hover:opacity-100'}
-                          `}
-                        >
-                          <div className="pointer-events-none transform scale-100 mb-2">
-                            <ChordLayout voicing={v} showFingering={showFingering} minimal={true} />
+                      {orderedVoicings.map((v, index) => {
+                        const isSelected = (selectedVoicingId || orderedVoicings[0].id) === v.id;
+                        const isDragging = draggedIndex === index;
+
+                        return (
+                          <div
+                            key={v.id}
+                            className="relative group"
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, v.id, index)}
+                            onDragOver={handleDragOver}
+                            onDragEnd={handleDragEnd}
+                            onDrop={(e) => handleDrop(e, index)}
+                          >
+                            <button
+                              onClick={() => setSelectedVoicingId(v.id)}
+                              className={`
+                                w-full relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-300
+                                ${isSelected
+                                  ? 'bg-primary/10 border-primary ring-2 ring-primary/50 shadow-2xl scale-[1.02]'
+                                  : 'bg-card/50 border-border hover:bg-card hover:border-primary/50 opacity-70 hover:opacity-100'}
+                                ${isDragging ? 'opacity-40 scale-95' : ''}
+                                cursor-move
+                              `}
+                            >
+                              <div className="pointer-events-none transform scale-100 mb-2">
+                                <ChordLayout voicing={v} showFingering={showFingering} minimal={true} />
+                              </div>
+                              <div className={`text-[11px] font-black uppercase tracking-widest ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
+                                {v.startingFret}FR
+                              </div>
+                            </button>
                           </div>
-                          <div className={`text-[11px] font-black uppercase tracking-widest ${(selectedVoicingId || chordVoicings[0].id) === v.id ? 'text-primary' : 'text-muted-foreground'
-                            }`}>
-                            {v.startingFret}FR
-                          </div>
-                        </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </>
