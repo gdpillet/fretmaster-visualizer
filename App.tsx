@@ -2,10 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Controls } from './components/Controls';
 import { Fretboard } from './components/Fretboard';
 import { ChordLayout } from './components/ChordLayout';
-import { Binary, Music, X } from 'lucide-react';
+import { Binary, Music, X, RefreshCcw, Play } from 'lucide-react';
 import { NOTES, SCALES, CHORDS, NOTE_COLORS } from './constants';
 import { getFretboardNotes, getIntervalName, getHarmonizedChords, HarmonyLevel } from './utils/theory';
 import { generateChordVoicings } from './utils/chord-generator';
+import { audioEngine } from './utils/audio-engine';
 import { ViewMode } from './types';
 
 const App: React.FC = () => {
@@ -18,6 +19,21 @@ const App: React.FC = () => {
   const [showFingering, setShowFingering] = useState<boolean>(true);
   const [harmonyLevel, setHarmonyLevel] = useState<HarmonyLevel>('triad');
   const [selectedVoicingId, setSelectedVoicingId] = useState<string | null>(null);
+
+  // Dismissed chord voicings (shown grayed out at the end)
+  const [dismissedVoicingIds, setDismissedVoicingIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('dismissedChordVoicings');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  // Persist dismissed voicings to localStorage
+  useEffect(() => {
+    localStorage.setItem('dismissedChordVoicings', JSON.stringify(Array.from(dismissedVoicingIds)));
+  }, [dismissedVoicingIds]);
 
   // Custom chord voicing order (persisted in localStorage per chord)
   const [customVoicingOrder, setCustomVoicingOrder] = useState<Record<string, string[]>>(() => {
@@ -135,6 +151,19 @@ const App: React.FC = () => {
       // e.g. if we have 'Diminished' and CHORDS has 'Diminished' it works.
       setTypeIndex(0);
     }
+  };
+
+  // Handle dismissing/restoring a chord voicing
+  const handleDismissVoicing = (voicingId: string) => {
+    setDismissedVoicingIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(voicingId)) {
+        newSet.delete(voicingId); // Restore
+      } else {
+        newSet.add(voicingId); // Dismiss
+      }
+      return newSet;
+    });
   };
 
   // Apply custom voicing order
@@ -267,6 +296,64 @@ const App: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* Play Scale Button */}
+            {mode === 'scale' && (
+              <button
+                onClick={() => {
+                  let currentOctave = 3;
+                  const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+                  orderedNotes.forEach((note, idx) => {
+                    const noteIndex = notes.indexOf(note);
+                    const prevNoteIndex = idx > 0 ? notes.indexOf(orderedNotes[idx - 1]) : -1;
+
+                    // Logic to increment octave
+                    // Usually scales go UP in pitch.
+                    // If current note index is LOWER than previous note index, we likely crossed the octave boundary (B -> C)
+                    // e.g. B (11) -> C (0)
+                    if (prevNoteIndex !== -1 && noteIndex < prevNoteIndex) {
+                      currentOctave++;
+                    }
+
+                    audioEngine.playNote(note, currentOctave, idx * 0.3, 1.0);
+                  });
+
+                  // Play Root one octave up to resolve? 
+                  // Usually scales repeat the Octave.
+                  // Let's check if the user wants just the displayed notes or a full octave range.
+                  // renderedNotes usually is 7 notes for a major scale.
+                  // Let's add the octave root for resolution if it's a 7 note scale.
+                  if (orderedNotes.length === 7) {
+                    const rootNote = orderedNotes[0];
+                    const rootIndex = notes.indexOf(rootNote);
+                    const lastNoteIndex = notes.indexOf(orderedNotes[orderedNotes.length - 1]);
+                    if (rootIndex < lastNoteIndex) {
+                      // If root index < last note index, it means we haven't wrapped YET in the last step?
+                      // Actually we compare Root vs Last.
+                      // B (11) -> C (0) (wrapped).
+                      // If Last is B(11) and Root is C(0). B->C wraps.
+                      // If Last is G(7) and Root is A(9). G->A doesn't wrap? Wait.
+                    }
+
+                    // Just blindly play root one octave up from start?
+                    // Wait, we need to track currentOctave properly across the whole sequence.
+                    // Let's just play the notes in 'orderedNotes' for now as that's what's visible.
+                    // Or add the resolution note at the end.
+                    const finalOctave = currentOctave + (notes.indexOf(orderedNotes[0]) < notes.indexOf(orderedNotes[orderedNotes.length - 1]) ? 1 : 0);
+                    audioEngine.playNote(orderedNotes[0], finalOctave, orderedNotes.length * 0.3, 1.0);
+                  }
+                }}
+                className="
+                  mt-2 px-6 py-1.5 rounded-full
+                  bg-emerald-500/10 border border-emerald-500/50 text-emerald-600 dark:text-emerald-400
+                  hover:bg-emerald-500 hover:text-white transition-all
+                  flex items-center gap-2 text-xs font-bold uppercase tracking-wider
+                "
+              >
+                <Play size={10} fill="currentColor" /> Play Scale
+              </button>
+            )}
           </div>
 
           {/* Right: Diatonic Chords (Scale Mode Only) */}
@@ -285,9 +372,24 @@ const App: React.FC = () => {
                   const intervals = chordDef ? chordDef.intervals : [0, 4, 7]; // fallback Major
 
                   const voicings = generateChordVoicings(chord.root, intervals, chord.quality);
-                  // Pick the best one? e.g. Open position or first available.
-                  // Let's pick one with startingFret <= 5 ideally for simplicity, or just the first.
-                  const bestVoicing = voicings.length > 0 ? voicings[0] : null;
+
+                  // Pick the best voicing:
+                  // 1. Check if there is a custom order for this chord
+                  const orderKey = `${chord.root}-${chord.quality}`;
+                  const customOrder = customVoicingOrder[orderKey];
+
+                  let bestVoicing = null;
+
+                  if (customOrder && customOrder.length > 0) {
+                    // Try to find the user's preferred first voicing
+                    const preferredId = customOrder[0];
+                    bestVoicing = voicings.find(v => v.id === preferredId) || null;
+                  }
+
+                  // 2. Fallback to default logic (first one)
+                  if (!bestVoicing && voicings.length > 0) {
+                    bestVoicing = voicings[0];
+                  }
 
                   return (
                     <button
@@ -357,12 +459,41 @@ const App: React.FC = () => {
                         <div className="flex flex-col items-center gap-8 w-full max-w-md">
                           {/* Large Chord Diagram */}
                           <div className="relative flex flex-col items-center">
-                            <div className="transform scale-150 origin-center">
+                            <div className="transform scale-150 origin-center mb-6">
                               <ChordLayout voicing={mainVoicing} showFingering={showFingering} minimal={true} />
                             </div>
 
+                            {/* Strum Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const notesToPlay = mainVoicing.strings
+                                  .filter(s => s.fret !== -1)
+                                  .map(s => {
+                                    // Calculate Octave logic
+                                    const stringNum = s.string;
+                                    const baseSemitones = [52, 47, 43, 38, 33, 28][stringNum - 1];
+                                    const totalSemitones = baseSemitones + s.fret;
+                                    const octave = Math.floor(totalSemitones / 12);
+                                    return { note: s.note!, octave };
+                                  });
+                                audioEngine.playChord(notesToPlay);
+                              }}
+                              className="
+                                flex items-center gap-3 px-6 py-2.5 rounded-full
+                                bg-primary text-primary-foreground font-bold shadow-lg hover:shadow-primary/25
+                                hover:scale-105 active:scale-95 transition-all
+                                group z-10
+                              "
+                            >
+                              <div className="p-1 rounded-full bg-white/20 group-hover:bg-white/30 transition-colors">
+                                <Play size={16} fill="currentColor" />
+                              </div>
+                              <span className="tracking-wide text-sm">STRUM</span>
+                            </button>
+
                             {/* Chord Title */}
-                            <h3 className="mt-16 text-3xl font-black text-foreground tracking-tight whitespace-nowrap">
+                            <h3 className="mt-8 text-3xl font-black text-foreground tracking-tight whitespace-nowrap">
                               {mainVoicing.name.split(' (')[0]}
                               {mainVoicing.name.includes(' (') && (
                                 <span className="text-muted-foreground text-2xl ml-2 font-bold">
@@ -401,34 +532,57 @@ const App: React.FC = () => {
                       {orderedVoicings.map((v, index) => {
                         const isSelected = (selectedVoicingId || orderedVoicings[0].id) === v.id;
                         const isDragging = draggedIndex === index;
+                        const isDismissed = dismissedVoicingIds.has(v.id);
 
                         return (
                           <div
                             key={v.id}
                             className="relative group"
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, v.id, index)}
-                            onDragOver={handleDragOver}
-                            onDragEnd={handleDragEnd}
-                            onDrop={(e) => handleDrop(e, index)}
+                            draggable={!isDismissed}
+                            onDragStart={(e) => !isDismissed && handleDragStart(e, v.id, index)}
+                            onDragOver={!isDismissed ? handleDragOver : undefined}
+                            onDragEnd={!isDismissed ? handleDragEnd : undefined}
+                            onDrop={(e) => !isDismissed && handleDrop(e, index)}
                           >
                             <button
                               onClick={() => setSelectedVoicingId(v.id)}
+                              disabled={isDismissed}
                               className={`
                                 w-full relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-300
-                                ${isSelected
+                                ${isSelected && !isDismissed
                                   ? 'bg-primary/10 border-primary ring-2 ring-primary/50 shadow-2xl scale-[1.02]'
-                                  : 'bg-card/50 border-border hover:bg-card hover:border-primary/50 opacity-70 hover:opacity-100'}
+                                  : isDismissed
+                                    ? 'bg-card/20 border-border/30 opacity-40 cursor-not-allowed'
+                                    : 'bg-card/50 border-border hover:bg-card hover:border-primary/50 opacity-70 hover:opacity-100'}
                                 ${isDragging ? 'opacity-40 scale-95' : ''}
-                                cursor-move
+                                ${!isDismissed ? 'cursor-move' : ''}
                               `}
                             >
-                              <div className="pointer-events-none transform scale-100 mb-2">
+                              <div className={`pointer-events-none transform scale-100 mb-2 ${isDismissed ? 'grayscale' : ''}`}>
                                 <ChordLayout voicing={v} showFingering={showFingering} minimal={true} />
                               </div>
-                              <div className={`text-[11px] font-black uppercase tracking-widest ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
-                                {v.startingFret}FR
-                              </div>
+                            </button>
+
+                            {/* Dismiss/Restore Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDismissVoicing(v.id);
+                              }}
+                              className={`
+                                absolute top-2 right-2 z-10
+                                w-6 h-6 rounded-full
+                                backdrop-blur-md border border-border/50
+                                flex items-center justify-center
+                                opacity-0 group-hover:opacity-100
+                                transition-all duration-300
+                                ${isDismissed
+                                  ? 'bg-green-500/10 border-green-500 text-green-500 hover:bg-green-500 hover:text-white'
+                                  : 'bg-card/80 text-muted-foreground hover:bg-red-500 hover:border-red-500 hover:text-white hover:scale-110'}
+                              `}
+                              title={isDismissed ? "Restore this voicing" : "Dismiss this voicing"}
+                            >
+                              {isDismissed ? <RefreshCcw size={12} strokeWidth={2.5} /> : <X size={14} strokeWidth={2.5} />}
                             </button>
                           </div>
                         );

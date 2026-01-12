@@ -187,27 +187,142 @@ export const Controls: React.FC<ControlsProps> = ({
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             {mode === 'scale' ? "Pattern Type" : "Chord Quality"}
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            {(mode === 'scale' ? SCALES : CHORDS).map((item, idx) => (
-              <button
-                key={item.name}
-                onClick={() => setTypeIndex(idx)}
-                className={`
-                  flex flex-col justify-center py-2 px-3 rounded-md border text-left transition-all leading-tight
-                  ${typeIndex === idx
-                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                    : 'bg-card text-foreground border-border hover:border-primary/30'}
-                `}
-              >
-                <span className="text-xs font-bold truncate w-full">{item.name}</span>
-                {/* Render description if available (for chords) */}
-                {(item as any).description && (
-                  <span className={`text-[10px] mt-0.5 truncate w-full ${typeIndex === idx ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
-                    {(item as any).description}
-                  </span>
-                )}
-              </button>
-            ))}
+          <div className="flex flex-col gap-4">
+            {mode === 'scale' ? (
+              <div className="grid grid-cols-2 gap-2">
+                {SCALES.map((item, idx) => (
+                  <button
+                    key={item.name}
+                    onClick={() => setTypeIndex(idx)}
+                    className={`
+                      flex flex-col justify-center py-2 px-3 rounded-md border text-left transition-all leading-tight
+                      ${typeIndex === idx
+                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                        : 'bg-card text-foreground border-border hover:border-primary/30'}
+                    `}
+                  >
+                    <span className="text-xs font-bold truncate w-full">{item.name}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              // Enhanced Chord Selector with Groups
+              <>
+                {/* Group 1: Essentials & Rock */}
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-bold text-primary/80 uppercase tracking-tighter ml-1">Essentials & Rock</div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      { name: 'Major', desc: 'Happy, stable foundation', tooltip: 'The foundation of everything. Happy and stable sound. (e.g., C Major in "Wonderwall")' },
+                      { name: 'Minor', desc: 'Sad, emotional standard', tooltip: 'The standard for sad or emotive songs. (e.g., Am in "Stairway to Heaven")' },
+                      { name: '5 (Power Chord)', desc: 'Rock, distorted, minimalist', tooltip: 'The king of Rock and Metal. Powerful, distorted, and minimalist. (e.g., G5 in Punk riffs)' },
+                    ].map(item => {
+                      const idx = CHORDS.findIndex(c => c.name === item.name);
+                      if (idx === -1) return null;
+                      return (
+                        <button
+                          key={item.name}
+                          onClick={() => setTypeIndex(idx)}
+                          title={item.tooltip}
+                          className={`
+                            flex flex-col justify-center py-3 px-4 rounded-lg border text-left transition-all leading-tight relative overflow-hidden group
+                            ${typeIndex === idx
+                              ? 'bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]'
+                              : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/50'}
+                          `}
+                        >
+                          <div className={`absolute left-0 top-0 bottom-0 w-1 ${typeIndex === idx ? 'bg-white/20' : 'bg-transparent group-hover:bg-primary/50'} transition-colors`} />
+                          <span className="text-sm font-black w-full">{item.name}</span>
+                          <span className={`text-[11px] mt-0.5 w-full ${typeIndex === idx ? 'text-primary-foreground/90' : 'text-muted-foreground'}`}>
+                            {item.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Group 2: Pop/Rock Ornaments */}
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-bold text-primary/80 uppercase tracking-tighter ml-1 border-t border-border pt-4 mt-2">Pop/Rock Ornaments</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { name: 'Sus2', desc: 'Bright, open', tooltip: 'Create bright tension that needs to resolve.' },
+                      { name: 'Sus4', desc: 'Tension -> resolve', tooltip: 'Create bright tension that needs to resolve. (e.g., Asus4 in "Pinball Wizard")' },
+                      { name: 'Add 9', desc: 'Beautiful, ballad', tooltip: 'Beautiful, open sound; very common in modern ballads. (e.g., Cadd9 in "Wonderwall")' },
+                      { name: 'Dominant 7', desc: 'Bluesy connection', tooltip: 'Adds a "bluesy" tension necessary for connecting chords. (e.g., E7 in Blues)' },
+                      { name: 'Major 7', desc: 'Dreamy, smooth', tooltip: 'Dreamy, smooth, and "soulful." Essential for Lo-fi and sophisticated Pop.' },
+                      { name: 'Minor 7', desc: 'Mellow, soulful', tooltip: 'Dreamy, smooth, and "soulful." Essential for Lo-fi and sophisticated Pop.' },
+                    ].map(item => {
+                      const idx = CHORDS.findIndex(c => c.name === item.name);
+                      if (idx === -1) return null;
+                      return (
+                        <button
+                          key={item.name}
+                          onClick={() => setTypeIndex(idx)}
+                          title={item.tooltip}
+                          className={`
+                            flex flex-col justify-center py-2 px-3 rounded-md border text-left transition-all leading-tight
+                            ${typeIndex === idx
+                              ? 'bg-primary/90 text-primary-foreground border-primary shadow-sm'
+                              : 'bg-card text-foreground border-border hover:border-primary/30'}
+                          `}
+                        >
+                          <span className="text-xs font-bold truncate w-full">{item.name}</span>
+                          <span className={`text-[10px] mt-0.5 truncate w-full ${typeIndex === idx ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                            {item.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Group 3: Advanced */}
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-bold text-primary/80 uppercase tracking-tighter ml-1 border-t border-border pt-4 mt-2">Jazz & Complex Colors</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { name: 'Diminished', desc: 'Tential Tension', tooltip: 'Tonal Tension' },
+                      { name: 'Augmented', desc: 'Unsettled', tooltip: 'Tonal Tension' },
+                      { name: 'Diminished 7', desc: 'Symmetrical', tooltip: 'Tonal Tension' },
+                      { name: 'Half-Diminished (m7b5)', desc: 'Tragic Jazz', tooltip: 'Tonal Tension' },
+                      { name: '7b9', desc: 'Dark tension', tooltip: 'Tonal Tension' },
+                      { name: 'Major 6', desc: 'Swing/Country', tooltip: 'Color Variations' },
+                      { name: 'Minor 6', desc: 'Mystery/Spy', tooltip: 'Color Variations' },
+                      { name: 'Minor Major 7', desc: 'Hitchcock Noir', tooltip: 'Color Variations' },
+                      { name: 'Major 9', desc: 'Lush', tooltip: 'Jazz/Funk Extensions' },
+                      { name: 'Minor 9', desc: 'Deep Soul', tooltip: 'Jazz/Funk Extensions' },
+                      { name: 'Dominant 9', desc: 'James Brown', tooltip: 'Jazz/Funk Extensions' },
+                      { name: '11th / 13th', desc: 'Neo-Soul', tooltip: 'Jazz/Funk Extensions' },
+                      { name: 'Major 13', desc: 'Lush Ending', tooltip: 'Jazz/Funk Extensions' },
+                      { name: '7#9 (Hendrix)', desc: 'Purple Haze', tooltip: 'Jazz/Funk Extensions' },
+                    ].map(item => {
+                      const idx = CHORDS.findIndex(c => c.name === item.name);
+                      if (idx === -1) return null;
+                      return (
+                        <button
+                          key={item.name}
+                          onClick={() => setTypeIndex(idx)}
+                          title={item.tooltip}
+                          className={`
+                            flex flex-col justify-center py-2 px-3 rounded-md border text-left transition-all leading-tight opacity-90
+                            ${typeIndex === idx
+                              ? 'bg-secondary text-secondary-foreground border-primary shadow-sm'
+                              : 'bg-card/50 text-foreground border-border hover:border-primary/30'}
+                          `}
+                        >
+                          <span className="text-xs font-bold truncate w-full">{item.name}</span>
+                          <span className={`text-[10px] mt-0.5 truncate w-full ${typeIndex === idx ? 'text-secondary-foreground/70' : 'text-muted-foreground'}`}>
+                            {item.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

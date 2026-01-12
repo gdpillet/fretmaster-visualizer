@@ -39,35 +39,35 @@ export const SCALES: ScaleDefinition[] = [
 
 export const CHORDS: ChordDefinition[] = [
   // --- Essentials (The Big 5) ---
-  { name: 'Major', intervals: [0, 4, 7], description: 'Happy, stable, fundamental' },
-  { name: 'Minor', intervals: [0, 3, 7], description: 'Sad, serious, emotional' },
-  { name: 'Dominant 7', intervals: [0, 4, 7, 10], description: 'Bluesy, tension, wants to resolve' },
-  { name: 'Major 7', intervals: [0, 4, 7, 11], description: 'Dreamy, smooth, jazz staple' },
-  { name: 'Minor 7', intervals: [0, 3, 7, 10], description: 'Mellow, soulful, r&b' },
+  { name: 'Major', intervals: [0, 4, 7], description: 'Happy, Bright, Foundation. The energetic home base of most Western music.' },
+  { name: 'Minor', intervals: [0, 3, 7], description: 'Sad, Melancholy, Serious. The standard for emotional or darker storytelling.' },
+  { name: 'Dominant 7', intervals: [0, 4, 7, 10], description: 'Bluesy, Tension, Expectant. The driving force of Blues; strongly "pulls" back to the root.' },
+  { name: 'Major 7', intervals: [0, 4, 7, 11], description: 'Dreamy, Romantic, Smooth. Essential for Lo-fi, Jazz, and sophisticated Pop.' },
+  { name: 'Minor 7', intervals: [0, 3, 7, 10], description: 'Mellow, Soulful, Cool. The backbone of R&B, Neo-Soul, and Jazz.' },
 
   // --- Rock & Pop Staples ---
-  { name: '5 (Power Chord)', intervals: [0, 7], description: 'Rock, distortion, punchy' },
-  { name: 'Sus4', intervals: [0, 5, 7], description: 'Tension, usually resolves to Major' },
-  { name: 'Sus2', intervals: [0, 2, 7], description: 'Bright, open, airy' },
-  { name: 'Add 9', intervals: [0, 4, 7, 2], description: 'Beautiful, pop ballad sound' },
+  { name: '5 (Power Chord)', intervals: [0, 7], description: 'Powerful, Aggressive, Indestructible. The neutral king of Rock and Metal riffs.' },
+  { name: 'Sus4', intervals: [0, 5, 7], description: 'Tension, Anticipation. Feels like taking a breath before resolving to Major.' },
+  { name: 'Sus2', intervals: [0, 2, 7], description: 'Floating, Open, Hopeful. Creates a dreamy "hovering" texture that doesn\'t need to resolve.' },
+  { name: 'Add 9', intervals: [0, 4, 7, 2], description: 'Lush, "Sparkling", Nostalgic. Adds a beautiful, modern shine to standard ballads.' },
 
   // --- Intermediate Colors ---
-  { name: 'Major 6', intervals: [0, 4, 7, 9], description: 'Sweet, country/swing vibe' },
-  { name: 'Minor 6', intervals: [0, 3, 7, 9], description: 'Dark, mysterious, spy movie' },
-  { name: 'Diminished', intervals: [0, 3, 6], description: 'Tense, dramatic, unstable' },
-  { name: 'Augmented', intervals: [0, 4, 8], description: 'Unsettled, floating, spacey' },
+  { name: 'Major 6', intervals: [0, 4, 7, 9], description: 'Sweet, Playful, Pastoral. The classic "Beatles" ending or Country swing sound.' },
+  { name: 'Minor 6', intervals: [0, 3, 7, 9], description: 'Dark, Mysterious, "Spy". Evokes intrigue, detective noir, and sorrow.' },
+  { name: 'Diminished', intervals: [0, 3, 6], description: 'Tense, Dramatic, Unstable. Used in horror or to create moments of extreme crisis.' },
+  { name: 'Augmented', intervals: [0, 4, 8], description: 'Surreal, Sci-Fi, Anxious. A strange, "floating" sound often used for dream sequences.' },
 
   // --- Jazz & Advanced ---
-  { name: 'Minor Major 7', intervals: [0, 3, 7, 11], description: 'Noir, intense, Hitchcock-style' },
-  { name: 'Half-Diminished (m7b5)', intervals: [0, 3, 6, 10], description: 'Tragic, jazz minor 2-5-1' },
-  { name: 'Diminished 7', intervals: [0, 3, 6, 9], description: 'Symmetrical, passing chord' },
-  { name: 'Major 9', intervals: [0, 4, 7, 11, 2], description: 'Lush, sophisticated' },
-  { name: 'Minor 9', intervals: [0, 3, 7, 10, 2], description: 'Deep, rich, funk/soul' },
-  { name: 'Dominant 9', intervals: [0, 4, 7, 10, 2], description: 'Funky, "James Brown" chord' },
+  { name: 'Minor Major 7', intervals: [0, 3, 7, 11], description: 'Noir, Intense, "Hitchcock". The sound of a crime thriller or deep psychological tension.' },
+  { name: 'Half-Diminished (m7b5)', intervals: [0, 3, 6, 10], description: 'Tragic, Complex, "Yearning". The sophisticated "minor 2-5-1" jazz staple.' },
+  { name: 'Diminished 7', intervals: [0, 3, 6, 9], description: 'Symmetrical, Panic, Passing. A bridge between chords that sounds like a train whistle.' },
+  { name: 'Major 9', intervals: [0, 4, 7, 11, 2], description: 'Lush, Expansive, Sophisticated. The definitive "smooth jazz" or city pop texture.' },
+  { name: 'Minor 9', intervals: [0, 3, 7, 10, 2], description: 'Deep, Rich, Emotional. Adds a layer of "midnight" depth to standard minor chords.' },
+  { name: 'Dominant 9', intervals: [0, 4, 7, 10, 2], description: 'Funky, Groovy. The "James Brown" chord. Essential for Funk and Soul rhythm.' },
 
   // --- Altered (Hendrix/Neo-Soul) ---
-  { name: '7#9 (Hendrix)', intervals: [0, 4, 7, 10, 3], description: 'Purple Haze, rock edge' },
-  { name: '7b9', intervals: [0, 4, 7, 10, 1], description: 'Dark tension, classical resolve' },
-  { name: '11th / 13th', intervals: [0, 4, 7, 10, 2, 5], description: 'Complex, modern neo-soul' }, // Merged for simplicity or keep separate? Let's keep separate but fewer.
-  { name: 'Major 13', intervals: [0, 4, 7, 11, 2, 9], description: 'Very lush, ending chord' },
+  { name: '7#9 (Hendrix)', intervals: [0, 4, 7, 10, 3], description: 'Aggressive, Blues-Rock, Psycho. The "Purple Haze" chord. Tension meets distortion.' },
+  { name: '7b9', intervals: [0, 4, 7, 10, 1], description: 'Dark Tension, Exotic. Resolves beautifully to localized minor chords.' },
+  { name: '11th / 13th', intervals: [0, 4, 7, 10, 2, 5], description: 'Complex, Modern, Neo-Soul. The "Gospel" sound. Thick, rich, and full of flavor.' },
+  { name: 'Major 13', intervals: [0, 4, 7, 11, 2, 9], description: 'Very Lush, Final. The ultimate "Hollywood Ending" chord.' },
 ];

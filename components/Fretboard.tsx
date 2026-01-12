@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { FretboardNote } from '../types';
 import { NOTE_COLORS } from '../constants';
 import { getIntervalName } from '../utils/theory';
+import { audioEngine } from '../utils/audio-engine';
 
 interface FretboardProps {
   notes: FretboardNote[];
@@ -23,6 +24,46 @@ export const Fretboard: React.FC<FretboardProps> = ({ notes, orientation, theme 
     return notes.find((n) => n.string === stringIdx + 1 && n.fret === fretIdx);
   };
 
+  const handleNoteClick = (note: string, stringNum: number, fret: number) => {
+    // stringNum is 1-6 (1 = High E, 6 = Low E)
+    // Map to base octaves for open strings
+    // String 1 (E) -> E4
+    // String 2 (B) -> B3
+    // String 3 (G) -> G3
+    // String 4 (D) -> D3
+    // String 5 (A) -> A2
+    // String 6 (E) -> E2
+
+    let baseOctave = 3;
+    if (stringNum === 1) baseOctave = 4; // E4
+    else if (stringNum >= 2 && stringNum <= 4) baseOctave = 3; // B3, G3, D3
+    else baseOctave = 2; // A2, E2
+
+    // Adjust for fret position
+    // E.g. String 6 (E2) + 12 frets -> E3.
+    // We rely on the AudioEngine finding the frequency.
+    // Ideally we pass exact octave.
+    // Simple logic:
+    // C is the rollover point.
+    // But since getNoteFrequency takes note name and octave, we need the octave of *that specific note*.
+    // A simpler way: Calculate semitones from C0 or similar.
+    // Let's estimate:
+    // String base semitones from C0 (C0=0):
+    // E2 = 28
+    // A2 = 33
+    // D3 = 38
+    // G3 = 43
+    // B3 = 47
+    // E4 = 52
+
+    // Total semitones = base + fret
+    const baseSemitones = [52, 47, 43, 38, 33, 28][stringNum - 1]; // Index 0 is string 1
+    const totalSemitones = baseSemitones + fret;
+    const octave = Math.floor(totalSemitones / 12);
+
+    audioEngine.playNote(note, octave, 0, 1.0);
+  };
+
   // Logic for Fretboard Markers (Dots)
   const isSingleMarker = (fret: number) => [3, 5, 7, 9].includes(fret);
   const isDoubleMarker = (fret: number) => fret === 12;
@@ -39,12 +80,12 @@ export const Fretboard: React.FC<FretboardProps> = ({ notes, orientation, theme 
 
   return (
     <div className={`
-      relative select-none p-4 rounded-xl border shadow-2xl overflow-hidden transition-all duration-500
+      relative select-none p-4 rounded-xl border shadow-2xl transition-all duration-500
       ${isHorizontal ? 'min-w-[800px] w-full h-[320px]' : 'w-[320px] h-[750px] mx-auto'}
       ${theme === 'dark' ? 'bg-[#121212] border-zinc-800' : 'bg-[#fdfbf3] border-zinc-200'}
     `}>
       {/* Wood Texture / Background */}
-      <div className={`absolute inset-0 opacity-40 mix-blend-overlay pointer-events-none transition-opacity duration-500 ${theme === 'dark' ? 'bg-[url("https://www.transparenttextures.com/patterns/dark-wood.png")]' : 'bg-[url("https://www.transparenttextures.com/patterns/wood-pattern.png")]'}`} />
+      <div className={`absolute inset-0 opacity-40 mix-blend-overlay pointer-events-none transition-opacity duration-500 rounded-xl ${theme === 'dark' ? 'bg-[url("https://www.transparenttextures.com/patterns/dark-wood.png")]' : 'bg-[url("https://www.transparenttextures.com/patterns/wood-pattern.png")]'}`} />
 
       {/* Fretboard Surface */}
       <div className={`absolute inset-4 rounded-lg pointer-events-none ${theme === 'dark' ? 'bg-[#1a1a1a] shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]' : 'bg-[#e3d5ca] shadow-[inset_0_2px_10px_rgba(0,0,0,0.1)]'
@@ -54,7 +95,6 @@ export const Fretboard: React.FC<FretboardProps> = ({ notes, orientation, theme 
         relative w-full h-full flex z-10
         ${isHorizontal ? 'flex-row' : 'flex-col'}
       `}>
-
         {/* Nut (0 fret) */}
         <div className={`
           z-20 shadow-lg border-slate-600/30
@@ -83,18 +123,19 @@ export const Fretboard: React.FC<FretboardProps> = ({ notes, orientation, theme 
                   ${theme === 'dark' ? 'border-zinc-700 shadow-[inset_-1px_0_0_rgba(255,255,255,0.03)]' : 'border-zinc-400/60'}
                 `}
               >
-                {/* Fret Number Label */}
-                <span className={`
-                  absolute text-[11px] font-mono font-black tracking-tighter
-                  ${theme === 'dark' ? 'text-zinc-600' : 'text-zinc-400'}
-                  ${isHorizontal ? '-bottom-7 left-1/2 -translate-x-1/2' : '-left-8 top-1/2 -translate-y-1/2'}
-                `}>
-                  {fretNum}
-                </span>
+                {(isSingleMarker(fretNum) || isDoubleMarker(fretNum)) && (
+                  <span className={`
+                    absolute text-[11px] font-mono font-black tracking-tighter z-30
+                    ${theme === 'dark' ? 'text-white' : 'text-zinc-800'}
+                    ${isHorizontal ? '-top-5 left-1/2 -translate-x-1/2' : '-left-8 top-1/2 -translate-y-1/2'}
+                  `}>
+                    {fretNum}
+                  </span>
+                )}
 
                 {/* Inlay Markers */}
                 {(isSingleMarker(fretNum) || isDoubleMarker(fretNum)) && (
-                  <div className={`rounded-full shadow-inner opacity-20 ${theme === 'dark' ? 'bg-zinc-400' : 'bg-zinc-900'
+                  <div className={`rounded-full shadow-inner opacity-40 ${theme === 'dark' ? 'bg-zinc-200' : 'bg-zinc-800'
                     } ${isSingleMarker(fretNum) ? 'w-5 h-5' : 'flex gap-6 ' + (isHorizontal ? '' : 'flex-col')}`}>
                     {isDoubleMarker(fretNum) && (
                       <>
@@ -155,8 +196,12 @@ export const Fretboard: React.FC<FretboardProps> = ({ notes, orientation, theme 
               return (
                 <div
                   key={`note-${i}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNoteClick(n.note, n.string, n.fret);
+                  }}
                   className={`
-                      absolute flex flex-col items-center justify-center rounded-full shadow-xl font-black transition-all duration-300 transform scale-100 hover:scale-110 z-50
+                      absolute flex flex-col items-center justify-center rounded-full shadow-xl font-black transition-all duration-300 transform scale-100 hover:scale-110 active:scale-95 active:brightness-125 z-50 cursor-pointer
                       border-2 ${theme === 'dark' ? 'border-zinc-900' : 'border-white'}
                       ${isHorizontal ? 'w-10 h-10 text-base' : 'w-11 h-11 text-lg'} 
                       ${colorClass} ${textColor}
@@ -185,7 +230,7 @@ export const Fretboard: React.FC<FretboardProps> = ({ notes, orientation, theme 
 
       {/* Open Strings Area (Nut area notes) */}
       <div className={`absolute z-30
-        ${isHorizontal ? 'left-1 top-0 bottom-0 w-8' : 'top-1 left-0 right-0 h-8'}
+        ${isHorizontal ? 'left-1 top-4 bottom-4 w-8' : 'top-1 left-4 right-4 h-8'}
       `}>
         {notes.filter(n => n.fret === 0).map((n, i) => {
           const stringSizePct = 100 / STRINGS;
@@ -196,8 +241,12 @@ export const Fretboard: React.FC<FretboardProps> = ({ notes, orientation, theme 
           return (
             <div
               key={`open-${i}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNoteClick(n.note, n.string, 0);
+              }}
               className={`
-                    absolute flex items-center justify-center rounded-full font-extrabold text-xs
+                    absolute flex items-center justify-center rounded-full font-extrabold text-xs cursor-pointer hover:brightness-125 active:scale-95 transition-all
                     ${n.isRoot
                   ? 'bg-primary text-white'
                   : 'text-slate-400 bg-slate-800'}
