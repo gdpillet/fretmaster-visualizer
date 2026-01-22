@@ -8,6 +8,8 @@ import { getFretboardNotes, getIntervalName, getHarmonizedChords, HarmonyLevel }
 import { generateChordVoicings } from './utils/chord-generator';
 import { audioEngine } from './utils/audio-engine';
 import { ViewMode } from './types';
+import { RootSelector } from './components/RootSelector';
+import { PatternSelector } from './components/PatternSelector';
 
 const App: React.FC = () => {
   // State
@@ -429,6 +431,18 @@ const App: React.FC = () => {
           )}
         </div>
 
+        {/* NEW: Root & Pattern Selectors in Main Area */}
+        <div className="flex flex-col z-10 w-full relative">
+          <RootSelector root={root} setRoot={setRoot} />
+          <PatternSelector
+            mode={mode}
+            typeIndex={typeIndex}
+            setTypeIndex={setTypeIndex}
+            showFingering={showFingering}
+            setShowFingering={setShowFingering}
+          />
+        </div>
+
         {/* Fretboard / Chord Container */}
         <div className="flex-1 relative overflow-auto fretboard-scroll">
           {mode === 'scale' ? (
@@ -440,11 +454,11 @@ const App: React.FC = () => {
               />
             </div>
           ) : (
-            <div className="flex h-full w-full gap-6 p-6">
+            <div className="flex h-full w-full gap-6 p-6 overflow-hidden">
               {orderedVoicings.length > 0 ? (
                 <>
                   {/* LEFT COLUMN - FIXED FEATURED CHORD */}
-                  <div className="w-[45%] flex-shrink-0 flex flex-col items-center justify-center">
+                  <div className="w-[350px] xl:w-[400px] flex-shrink-0 flex flex-col items-center pt-4 overflow-y-auto custom-scrollbar">
                     {(() => {
                       const selectedId = selectedVoicingId || orderedVoicings[0].id;
                       const mainVoicing = orderedVoicings.find(v => v.id === selectedId) || orderedVoicings[0];
@@ -456,10 +470,10 @@ const App: React.FC = () => {
                       });
 
                       return (
-                        <div className="flex flex-col items-center gap-8 w-full max-w-md">
+                        <div className="flex flex-col items-center gap-6 w-full">
                           {/* Large Chord Diagram */}
                           <div className="relative flex flex-col items-center">
-                            <div className="transform scale-150 origin-center mb-6">
+                            <div className="transform scale-125 origin-center mb-4">
                               <ChordLayout voicing={mainVoicing} showFingering={showFingering} minimal={true} />
                             </div>
 
@@ -480,41 +494,38 @@ const App: React.FC = () => {
                                 audioEngine.playChord(notesToPlay);
                               }}
                               className="
-                                flex items-center gap-3 px-6 py-2.5 rounded-full
+                                flex items-center gap-2 px-5 py-2 rounded-full
                                 bg-primary text-primary-foreground font-bold shadow-lg hover:shadow-primary/25
                                 hover:scale-105 active:scale-95 transition-all
-                                group z-10
+                                group z-10 -mt-2
                               "
                             >
                               <div className="p-1 rounded-full bg-white/20 group-hover:bg-white/30 transition-colors">
-                                <Play size={16} fill="currentColor" />
+                                <Play size={12} fill="currentColor" />
                               </div>
-                              <span className="tracking-wide text-sm">STRUM</span>
+                              <span className="tracking-wide text-xs">STRUM</span>
                             </button>
 
                             {/* Chord Title */}
-                            <h3 className="mt-8 text-3xl font-black text-foreground tracking-tight whitespace-nowrap">
+                            <h3 className="mt-4 text-2xl font-black text-foreground tracking-tight whitespace-nowrap">
                               {mainVoicing.name.split(' (')[0]}
                               {mainVoicing.name.includes(' (') && (
-                                <span className="text-muted-foreground text-2xl ml-2 font-bold">
+                                <span className="text-muted-foreground text-xl ml-2 font-bold">
                                   ({mainVoicing.name.split(' (')[1]}
                                 </span>
                               )}
                             </h3>
                           </div>
 
-                          {/* Notes Info Legend */}
-                          <div className="w-full bg-card/40 backdrop-blur-md border border-border/50 rounded-2xl p-6 shadow-2xl">
-                            <div className="flex items-center gap-2 mb-4 text-sm font-bold text-muted-foreground uppercase tracking-widest border-b border-white/5 pb-3">
-                              <Binary size={14} /> Notes in this Chord
-                            </div>
-                            <div className="flex flex-wrap justify-center gap-6">
+                          {/* Notes Info Legend - Compact */}
+                          <div className="w-full bg-card/40 backdrop-blur-md border border-border/50 rounded-xl p-4 shadow-xl">
+                            <div className="flex flex-wrap justify-center gap-3">
                               {uniqueIntervals.map(note => (
-                                <div key={note.note} className="flex items-center gap-3">
-                                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground">
-                                    {getIntervalName(note.interval) === 'R' ? 'Root' : getIntervalName(note.interval)} :
+                                <div key={note.note} className="flex items-center gap-1.5">
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/5 text-muted-foreground">
+                                    {getIntervalName(note.interval) === 'R' ? 'Root' : getIntervalName(note.interval)}
                                   </span>
-                                  <span className={`text-lg font-bold ${NOTE_COLORS[note.note]} bg-clip-text text-transparent`}>
+                                  <span className={`text-sm font-bold ${NOTE_COLORS[note.note]} bg-clip-text text-transparent`}>
                                     {note.note}
                                   </span>
                                 </div>
@@ -527,8 +538,8 @@ const App: React.FC = () => {
                   </div>
 
                   {/* RIGHT COLUMN - SCROLLABLE VARIATIONS GRID */}
-                  <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                    <div className="grid grid-cols-3 gap-6 p-2 pb-6">
+                  <div className="flex-1 overflow-y-auto px-2 custom-scrollbar">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-6">
                       {orderedVoicings.map((v, index) => {
                         const isSelected = (selectedVoicingId || orderedVoicings[0].id) === v.id;
                         const isDragging = draggedIndex === index;
@@ -548,9 +559,9 @@ const App: React.FC = () => {
                               onClick={() => setSelectedVoicingId(v.id)}
                               disabled={isDismissed}
                               className={`
-                                w-full relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-300
+                                w-full relative flex flex-col items-center p-2 py-4 rounded-xl border transition-all duration-300
                                 ${isSelected && !isDismissed
-                                  ? 'bg-primary/10 border-primary ring-2 ring-primary/50 shadow-2xl scale-[1.02]'
+                                  ? 'bg-primary/10 border-primary ring-2 ring-primary/50 shadow-xl scale-[1.02]'
                                   : isDismissed
                                     ? 'bg-card/20 border-border/30 opacity-40 cursor-not-allowed'
                                     : 'bg-card/50 border-border hover:bg-card hover:border-primary/50 opacity-70 hover:opacity-100'}
@@ -558,7 +569,7 @@ const App: React.FC = () => {
                                 ${!isDismissed ? 'cursor-move' : ''}
                               `}
                             >
-                              <div className={`pointer-events-none transform scale-100 mb-2 ${isDismissed ? 'grayscale' : ''}`}>
+                              <div className={`pointer-events-none transform scale-[0.8] origin-center -my-2 ${isDismissed ? 'grayscale' : ''}`}>
                                 <ChordLayout voicing={v} showFingering={showFingering} minimal={true} />
                               </div>
                             </button>
@@ -570,8 +581,8 @@ const App: React.FC = () => {
                                 handleDismissVoicing(v.id);
                               }}
                               className={`
-                                absolute top-2 right-2 z-10
-                                w-6 h-6 rounded-full
+                                absolute top-1 right-1 z-10
+                                w-5 h-5 rounded-full
                                 backdrop-blur-md border border-border/50
                                 flex items-center justify-center
                                 opacity-0 group-hover:opacity-100
@@ -582,7 +593,7 @@ const App: React.FC = () => {
                               `}
                               title={isDismissed ? "Restore this voicing" : "Dismiss this voicing"}
                             >
-                              {isDismissed ? <RefreshCcw size={12} strokeWidth={2.5} /> : <X size={14} strokeWidth={2.5} />}
+                              {isDismissed ? <RefreshCcw size={10} strokeWidth={2.5} /> : <X size={12} strokeWidth={2.5} />}
                             </button>
                           </div>
                         );
